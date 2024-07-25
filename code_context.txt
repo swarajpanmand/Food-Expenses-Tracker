@@ -1,4 +1,4 @@
-// File: index.html
+// File: client/index.html
 <!doctype html>
 <html lang="en">
   <head>
@@ -13,43 +13,581 @@
   </body>
 </html>
 
-// File: public/app.js
-
-// File: src/App.css
-.{
-  
-}
-
-.app-main{
-    display: flex;
-    width: 100%;
-    /* justify-content: space-evenly;
-    align-items: center;
-    height: 100vh;
-    width: 100%;
-    padding: 10px;
-    background-color: #f5f5f5; */
-}
-// File: src/App.jsx
+// File: client/src/App.jsx
 import React from 'react'
-import Mess from './Mess'
-import Tiffin from './Tiffin'
-import Junk from './Junk'
-import './App.css'
+import Mess from './components/Mess'
+import Tiffin from './components/Tiffin'
+import Junk from './components/Junk'
+import './styles/App.css'
+import Summary from './components/Summary'
+import{useState} from 'react'
 
 const App = () => {
+
+  const [refreshKey, setRefreshKey] = useState(0);
+  const triggerRefresh = () => {
+    setRefreshKey(oldKey => oldKey + 1);
+  }
+
   return (
-    <div className='app-main'>
-      <Mess/>
-      <Tiffin/>
-      <Junk/>
-    </div>
+    <React.Fragment>
+      <div className='app-main'>
+        <Mess onExpenseAdded={triggerRefresh}/>
+        <Tiffin onExpenseAdded={triggerRefresh}/>
+        <Junk onExpenseAdded={triggerRefresh}/>
+      </div>
+      <div>
+        <Summary refreshKey={refreshKey}/>
+      </div>
+    </React.Fragment>
   )
 }
 
 export default App
 
-// File: src/index.css
+// File: client/src/components/Junk.jsx
+import React from 'react'
+import '../styles/App.css'
+import { useState } from 'react'
+import axios from 'axios'
+
+const Junk = ({onExpenseAdded}) => {
+
+  const [data, setData] = useState({
+    date: '',
+    item: 'junk',
+    cost: '',
+    itemBrief: ''
+  })
+
+  const handleChange = (e) => {
+    const {name, value} = e.target
+    setData((preData)=> ({
+      ...preData,
+      [name]: value
+    }))
+  }
+
+  const handleSubmit = async(e) => {
+    e.preventDefault()
+    if (!data.date || !data.item || !data.cost) {
+      alert('Please fill all fields');
+      return;
+    }
+    try {
+      const response = await axios.post('http://localhost:3000/', data)
+      if(response.data){
+        alert('Data submitted successfully');
+        onExpenseAdded();
+      }
+    } catch (error) {
+      console.error(error)
+      alert('An error occurred while submitting data');
+    }
+  
+    setData({
+      date: '',
+      item: 'junk',
+      cost: '',
+      itemBrief: ''
+    })
+  }
+
+  return (
+    <div className='junk'>
+      <h2>Junkfood</h2>
+      <form onSubmit={handleSubmit}>  
+        <div className="date-item">
+          <div className='date'>
+            <h3>Date</h3>
+            <input type='date' name='date' value={data.date} onChange={handleChange}/>
+          </div>
+          <div className="item">
+            <h3>Item</h3>
+            <input type='text' name='itemBrief' value={data.itemBrief} onChange={handleChange}/>
+          </div>
+        </div>
+        <div className="cost">
+          <h3>Cost</h3>
+          <input type='number' name='cost' value={data.cost} onChange={handleChange}/>
+        </div>
+        <button type='submit'>
+          Add Expense
+        </button>
+        </form>
+    </div>
+  )
+}
+
+export default Junk
+
+// File: client/src/components/Mess.jsx
+import React from 'react'
+import '../styles/App.css'
+import { useState } from 'react'
+import axios from 'axios'
+
+
+const Mess = ({onExpenseAdded}) => {
+  const [data, setData] = useState({
+    date: '',
+    item: 'mess',
+    cost: ''
+  })
+
+  const handleChange = (e) => {
+    const {name, value} = e.target
+    setData((preData)=> ({
+      ...preData,
+      [name]: value
+    }))
+  }
+
+  const handleSubmit = async(e) => {
+    e.preventDefault()
+    if (!data.date || !data.item || !data.cost) {
+      alert('Please fill all fields');
+      return;
+    }
+    try {
+      const response = await axios.post('http://localhost:3000/', data)
+      if(response.data){
+        alert('Data submitted successfully');
+        onExpenseAdded();
+      }
+    } catch (error) {
+      console.error(error)
+      alert('An error occurred while submitting data');
+    }
+  
+    setData({
+      date: '',
+      item: 'mess',
+      cost: ''
+    })
+  }
+
+  return (
+    <div className='mess'>
+      <h2>Messfood</h2>
+      <form onSubmit={handleSubmit}>  
+        <div className="date-item">
+          <div className='date'>
+            <h3>Date</h3>
+            <input type='date' name='date' value={data.date} onChange={handleChange}/>
+          </div>
+        </div>
+        <div className="cost">
+          <h3>Cost</h3>
+          <input type='number' name='cost' value={data.cost} onChange={handleChange}/>
+        </div>
+        <button type='submit'>
+          Add Expense
+        </button>
+        </form>
+    </div>
+  )
+}
+
+export default Mess
+
+// File: client/src/components/Summary.jsx
+import React from 'react'
+import { useState, useEffect } from 'react'
+import axios from 'axios'
+import '../styles/App.css'
+
+const Summary = () => {
+    const [dailySummary, setDailySummary] = useState([]);
+    const [monthlySummary, setMonthlySummary] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const fetchSummaries = async () => {
+            try {
+                setIsLoading(true);
+                const dailyResponse = await axios.get('http://localhost:3000/daily-summary');
+                setDailySummary(dailyResponse.data);
+                console.log('Daily Summary Data:', dailyResponse.data);
+    
+                const monthlyResponse = await axios.get('http://localhost:3000/monthly-summary');
+                setMonthlySummary(monthlyResponse.data);
+            } catch (error) {
+                console.error('Failed to fetch summaries', error);
+                setError('Failed to load data. Please try again later.');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchSummaries();
+    }, [refreshKey])
+
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) {
+            console.error('Invalid date:', dateString);
+            return 'Invalid Date';
+        }
+        return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+    }
+
+    const formatMonth = (monthStr) => {
+        const [year, month] = monthStr.split('-');
+        return new Date(year, month - 1).toLocaleString('default', { month: 'long', year: 'numeric' });
+    }
+
+    if (isLoading) return <div className="loading">Loading...</div>;
+    if (error) return <div className="error">{error}</div>;
+
+    return (
+        <div className="summary">
+            <h2>Expense Summary</h2>
+            <div className="summary-container">
+            <div className="daily-summary">
+                    <h3>Daily Summary (Last 30 Days)</h3>
+                    {dailySummary.length > 0 ? (
+                        <ul>
+                            {dailySummary.map((day) => (
+                                <li key={day._id}>
+                                    <span>{formatDate(day._id)}</span>
+                                    <span>₹{day.totalCost ? day.totalCost.toFixed(2) : '0.00'}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <p>No daily summary data available.</p>
+                    )}
+                </div>
+                <div className="monthly-summary">
+                    <h3>Monthly Category Summary</h3>
+                    <div className="monthly-cards">
+                        {monthlySummary.map((month) => (
+                            <div key={month._id} className="month-card">
+                                <h4>{formatMonth(month._id)}</h4>
+                                {['mess', 'tiffin', 'junk'].map(category => (
+                                    <div key={category} className="expense-item">
+                                        <span className="expense-label">{category.charAt(0).toUpperCase() + category.slice(1)}:</span>
+                                        <span className="expense-value">
+                                             ₹{month[category] && month[category].totalCost ? month[category].totalCost.toFixed(2) : '0.00'}
+                                        </span>
+                                    </div>
+                                ))}
+                                <div className="expense-item total">
+                                    <span className="expense-label">Total:</span>
+                                    <span className="expense-value">
+                                        ₹{month.totalCost ? month.totalCost.toFixed(2) : '0.00'}
+                                        </span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+export default Summary
+// File: client/src/components/Tiffin.jsx
+import React from 'react'
+import '../styles/App.css'
+import { useState } from 'react'
+import axios from 'axios'
+
+const Tiffin = ({onExpenseAdded}) => {
+  const [data, setData] = useState({
+    date: '',
+    item: 'tiffin',
+    cost: ''
+  })
+
+  const handleChange = (e) => {
+    const {name, value} = e.target
+    setData((preData)=> ({
+      ...preData,
+      [name]: value
+    }))
+  }
+
+  const handleSubmit = async(e) => {
+    e.preventDefault()
+    if (!data.date || !data.item || !data.cost) {
+      alert('Please fill all fields');
+      return;
+    }
+    try {
+      const response = await axios.post('http://localhost:3000/', data)
+      if(response.data){
+        alert('Data submitted successfully');
+        onExpenseAdded();
+      }
+    } catch (error) {
+      console.error(error)
+      alert('An error occurred while submitting data');
+    }
+  
+    setData({
+      date: '',
+      item: 'tiffin',
+      cost: ''
+    })
+  }
+
+  return (
+    <div className='tiffin'>
+      <h2>Tiffin</h2>
+      <form onSubmit={handleSubmit}>  
+        <div className="date-item">
+          <div className='date'>
+            <h3>Date</h3>
+            <input type='date' name='date' value={data.date} onChange={handleChange}/>
+          </div>
+        </div>
+        <div className="cost">
+          <h3>Cost</h3>
+          <input type='number' name='cost' value={data.cost} onChange={handleChange}/>
+        </div>
+        <button type='submit'>
+          Add Expense
+        </button>
+        </form>
+    </div>
+  )
+}
+
+export default Tiffin
+
+// File: client/src/main.jsx
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App.jsx'
+import './styles/index.css'
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+)
+
+// File: client/src/styles/App.css
+.app-main {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  height: auto;
+  background-color: #f5f5f5;
+  border: #140f0f 1px solid;
+  color: #140f0f;
+  padding: 60px;
+  
+  
+}
+.summary {
+  padding: 20px;
+  background-color: #f5f5f5;
+}
+
+.summary h2 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.monthly-cards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+}
+
+.month-card {
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  width: 250px;
+  transition: transform 0.3s ease;
+}
+
+.month-card:hover {
+  transform: translateY(-5px);
+}
+
+.month-card h3 {
+  color: #2c3e50;
+  margin-bottom: 15px;
+  text-align: center;
+  font-size: 1.2em;
+}
+
+.expense-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.expense-label {
+  color: #7f8c8d;
+}
+
+.expense-value {
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.total {
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px solid #ecf0f1;
+}
+
+.total .expense-label,
+.total .expense-value {
+  font-weight: bold;
+  color: #e74c3c;
+}
+
+
+.date-item{
+  display: flex;  
+  
+}
+
+.junk {
+  height: auto;
+  width: 80%;
+  background-color: white;
+  padding: 30px;
+  border: #140f0f 1px solid;
+  margin: 10px;
+  border-radius: 10px;
+}
+.mess{
+  height: auto;
+  width: 90%;
+  background-color: white;
+  padding: 30px;
+  border: #140f0f 1px solid;
+  margin: 10px;
+  border-radius: 10px;
+}
+.tiffin{
+  height: auto;
+  width: 90%;
+  background-color: white;
+  padding: 30px;
+  border: #140f0f 1px solid;
+  margin: 10px;
+  border-radius: 10px;
+}
+.date{
+  
+}
+
+.summary {
+  padding: 20px;
+  background-color: #f5f5f5;
+  font-family: Arial, sans-serif;
+}
+
+.summary h2 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.summary-container {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.daily-summary, .monthly-summary {
+  color: #333;
+  flex: 1;
+  background-color: white;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.daily-summary h3, .monthly-summary h3 {
+  margin-bottom: 15px;
+  color: #2c3e50;
+}
+
+.daily-summary ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.daily-summary li {
+
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding: 5px 0;
+  border-bottom: 1px solid #ecf0f1;
+}
+
+.monthly-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.month-card {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  width: calc(50% - 10px);
+}
+
+.month-card h4 {
+  margin-bottom: 10px;
+  color: #2c3e50;
+}
+
+.expense-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.expense-label {
+  color: #7f8c8d;
+}
+
+.expense-value {
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.total {
+  margin-top: 10px;
+  padding-top: 5px;
+  border-top: 1px solid #ecf0f1;
+}
+
+.total .expense-label,
+.total .expense-value {
+  font-weight: bold;
+  color: #e74c3c;
+}
+
+.loading, .error {
+  text-align: center;
+  padding: 20px;
+  font-size: 18px;
+  color: #333;
+}
+
+.error {
+  color: #e74c3c;
+}
+// File: client/src/styles/index.css
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -59,123 +597,237 @@ export default App
   color: rgba(255, 255, 255, 0.87);
   background-color: #242424;
 
-  font-synthesis: none;
+  /* font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  -moz-osx-font-smoothing: grayscale; */
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
+
+// File: client/tailwind.config.js
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: [],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
 }
 
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
+// File: server/src/app.js
+const express = require("express");
+const app = express();
+const connectDB = require("./dbConnection");
+const User = require("./schema");
+const cors = require("cors");
+app.use(express.json());
+app.use(cors());
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+app.post("/", async (req, res) => {
+  try {
+    const { date, item, cost, itemBrief } = req.body;
+    const user = new User({
+      date,
+      item,
+      cost,
+      itemBrief,
+    });
+    await user.save();
+    res.send(user);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("failed");
   }
-  a:hover {
-    color: #747bff;
+});
+
+app.get("/daily-summary", async (req, res) => {
+    try {
+      const oneMonthAgo = new Date();
+      oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+  
+      console.log('Fetching daily summary from:', oneMonthAgo);
+  
+      const dailySummary = await User.aggregate([
+        {
+          $match: {
+            date: { $gte: oneMonthAgo },
+          },
+        },
+        {
+          $group: {
+            _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
+            totalCost: { $sum: "$cost" },
+          },
+        },
+        { $sort: { _id: -1 } },
+      ]);
+  
+      console.log('Daily summary data:', dailySummary);
+  
+      if (dailySummary.length === 0) {
+        console.log('No daily summary data found');
+      }
+  
+      res.json(dailySummary);
+    } catch (err) {
+      console.error('Error in /daily-summary:', err);
+      res.status(500).json({ error: "Failed to fetch daily summary", details: err.message });
+    }
+  });
+
+app.get("/monthly-summary", async (req, res) => {
+  try {
+    const monthlySummary = await User.aggregate([
+      {
+        $group: {
+          _id: {
+            year: { $year: "$date" },
+            month: { $month: "$date" },
+            item: "$item",
+          },
+          totalCost: { $sum: "$cost" },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            year: "$_id.year",
+            month: "$_id.month",
+          },
+          categories: {
+            $push: {
+              item: "$_id.item",
+              totalCost: "$totalCost",
+            },
+          },
+          totalCost: { $sum: "$totalCost" },
+        },
+      },
+      {
+        $project: {
+          _id: {
+            $concat: [
+              { $toString: "$_id.year" },
+              "-",
+              {
+                $cond: [
+                  { $lte: ["$_id.month", 10] },
+                  { $concat: ["0", { $toString: "$_id.month" }] },
+                  { $toString: "$_id.month" },
+                ],
+              },
+            ],
+          },
+          mess: {
+            $ifNull: [
+              {
+                $arrayElemAt: [
+                  {
+                    $filter: {
+                      input: "$categories",
+                      as: "cat",
+                      cond: { $eq: ["$$cat.item", "mess"] },
+                    },
+                  },
+                  0,
+                ],
+              },
+              { cost: 0 },
+            ],
+          },
+          tiffin: {
+            $ifNull:[
+                {
+                    $arrayElemAt:[
+                        {
+                            $filter:{
+                                input: "$categories",
+                                as: "cat",
+                                cond: { $eq: ["$$cat.item", "tiffin"]},
+                            },
+                        },
+                        0,
+                    ],
+                },
+                { cost: 0 },
+            ]
+          },
+          junk:{
+            $ifNull:[
+                {
+                    $arrayElemAt:[
+                        {
+                            $filter:{
+                                input: "$categories",
+                                as: "cat",
+                                cond:{ $eq: ["$$cat.item", "junk"]},
+                            },
+                        },
+                        0,
+                    ],
+                },
+                { cost: 0 },
+            ]
+          },
+            totalCost: 1,
+        },
+      },
+        { $sort: { _id: -1 } },
+    ]);
+    res.json(monthlySummary);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Failed to fetch monthly summary");
   }
-  button {
-    background-color: #f9f9f9;
+});
+
+app.listen(3000, () => {
+  connectDB();
+  console.log("server is running");
+});
+
+// File: server/src/dbConnection.js
+
+
+const mongoose = require("mongoose");
+
+const connectDB = async () => {
+  try {
+    await mongoose.connect('mongodb://localhost:27017/expense-tracker');
+    
+    console.log("MongoDB connected successfully");
+  } catch (err) {
+    console.error("Error connecting to MongoDB:", err);
+    process.exit(1); // Exit process with failure
   }
-}
+};
 
-// File: src/Junk.jsx
-import React from 'react'
+module.exports = connectDB;
 
-const Junk = () => {
-  return (
-    <div>
-      junk
-    </div>
-  )
-}
+// File: server/src/schema.js
+const mongoose = require('mongoose');
 
-export default Junk
+const UserSchema = new mongoose.Schema({
+    date: {
+        type: Date,
+        required: true
+    },
+    item: {
+        type: String,
+        required: true
+    },
+    cost: {
+        type: Number,
+        required: true
+    },
+    itemBrief:{
+        type: String,
+        required: false
+    }
 
-// File: src/main.jsx
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App.jsx'
-import './index.css'
-
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-)
-
-// File: src/Mess.jsx
-import React from 'react'
-
-const Mess = () => {
-  return (
-    <div>
-      mess
-    </div>
-  )
-}
-
-export default Mess
-
-// File: src/Tiffin.jsx
-import React from 'react'
-
-const Tiffin = () => {
-  return (
-    <div>
-      tiffin
-    </div>
-  )
-}
-
-export default Tiffin
-
-// File: vite.config.js
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-
-// https://vitejs.dev/config/
-export default defineConfig({
-  plugins: [react()],
 })
 
+const User = mongoose.model('User', UserSchema);
+
+module.exports = User;
