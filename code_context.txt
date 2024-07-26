@@ -3,9 +3,9 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React</title>
+    <title>Food Expense Tracker</title>
   </head>
   <body>
     <div id="root"></div>
@@ -31,12 +31,12 @@ const App = () => {
 
   return (
     <React.Fragment>
-      <div className='app-main'>
-        <Mess onExpenseAdded={triggerRefresh}/>
-        <Tiffin onExpenseAdded={triggerRefresh}/>
-        <Junk onExpenseAdded={triggerRefresh}/>
-      </div>
-      <div>
+      <div className="app-container">
+        <div className='app-main'>
+          <Mess onExpenseAdded={triggerRefresh}/>
+          <Tiffin onExpenseAdded={triggerRefresh}/>
+          <Junk onExpenseAdded={triggerRefresh}/>
+        </div>
         <Summary refreshKey={refreshKey}/>
       </div>
     </React.Fragment>
@@ -94,7 +94,7 @@ const Junk = ({onExpenseAdded}) => {
   }
 
   return (
-    <div className='junk'>
+    <div className='junk expense-card'>
       <h2>Junkfood</h2>
       <form onSubmit={handleSubmit}>  
         <div className="date-item">
@@ -168,7 +168,7 @@ const Mess = ({onExpenseAdded}) => {
   }
 
   return (
-    <div className='mess'>
+    <div className='mess expense-card'>
       <h2>Messfood</h2>
       <form onSubmit={handleSubmit}>  
         <div className="date-item">
@@ -197,7 +197,7 @@ import { useState, useEffect } from 'react'
 import axios from 'axios'
 import '../styles/App.css'
 
-const Summary = () => {
+const Summary = ({refreshKey}) => {
     const [dailySummary, setDailySummary] = useState([]);
     const [monthlySummary, setMonthlySummary] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -251,6 +251,7 @@ const Summary = () => {
                             {dailySummary.map((day) => (
                                 <li key={day._id}>
                                     <span>{formatDate(day._id)}</span>
+                                    
                                     <span>₹{day.totalCost ? day.totalCost.toFixed(2) : '0.00'}</span>
                                 </li>
                             ))}
@@ -335,7 +336,7 @@ const Tiffin = ({onExpenseAdded}) => {
   }
 
   return (
-    <div className='tiffin'>
+    <div className='tiffin expense-card'>
       <h2>Tiffin</h2>
       <form onSubmit={handleSubmit}>  
         <div className="date-item">
@@ -371,150 +372,107 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 )
 
 // File: client/src/styles/App.css
+:root {
+  --background-color: #f8f9fa;
+  --card-background: #e7e7ee;
+  --primary-color: #007bff;
+  --text-color: #333333;
+  --border-color: #e0e0e0;
+  --shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+body {
+  font-family: 'Arial', sans-serif;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  line-height: 1.6;
+  margin: 0;
+  padding: 0;
+}
+
+.app-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
 .app-main {
   display: flex;
-  justify-content: space-around;
-  align-items: center;
-  height: auto;
-  background-color: #f5f5f5;
-  border: #140f0f 1px solid;
-  color: #140f0f;
-  padding: 60px;
-  
-  
-}
-.summary {
-  padding: 20px;
-  background-color: #f5f5f5;
-}
-
-.summary h2 {
-  text-align: center;
-  color: #333;
-  margin-bottom: 20px;
-}
-
-.monthly-cards {
-  display: flex;
   flex-wrap: wrap;
-  justify-content: center;
   gap: 20px;
+  justify-content: space-around;
+
 }
 
-.month-card {
-  background-color: white;
-  border-radius: 10px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+.expense-card {
+  background-color: var(--card-background);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
   padding: 20px;
-  width: 250px;
-  transition: transform 0.3s ease;
+  /* width: calc(33.333% - 20px); */
+  width: 25%;
+  min-width: 250px;
 }
 
-.month-card:hover {
-  transform: translateY(-5px);
+.expense-card h2 {
+  color: var(--primary-color);
+  margin-top: 0;
 }
 
-.month-card h3 {
-  color: #2c3e50;
-  margin-bottom: 15px;
-  text-align: center;
-  font-size: 1.2em;
-}
-
-.expense-item {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-
-.expense-label {
-  color: #7f8c8d;
-}
-
-.expense-value {
-  font-weight: bold;
-  color: #2c3e50;
-}
-
-.total {
-  margin-top: 15px;
-  padding-top: 10px;
-  border-top: 1px solid #ecf0f1;
-}
-
-.total .expense-label,
-.total .expense-value {
-  font-weight: bold;
-  color: #e74c3c;
-}
-
-
-.date-item{
-  display: flex;  
-  
-}
-
-.junk {
-  height: auto;
+input[type="date"],
+input[type="number"],
+input[type="text"] {
   width: 80%;
-  background-color: white;
-  padding: 30px;
-  border: #140f0f 1px solid;
-  margin: 10px;
-  border-radius: 10px;
+  padding: 8px;
+  margin-bottom: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
 }
-.mess{
-  height: auto;
-  width: 90%;
-  background-color: white;
-  padding: 30px;
-  border: #140f0f 1px solid;
-  margin: 10px;
-  border-radius: 10px;
+
+button {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
 }
-.tiffin{
-  height: auto;
-  width: 90%;
-  background-color: white;
-  padding: 30px;
-  border: #140f0f 1px solid;
-  margin: 10px;
-  border-radius: 10px;
-}
-.date{
-  
+
+button:hover {
+  background-color: #0056b3;
 }
 
 .summary {
-  padding: 20px;
-  background-color: #f5f5f5;
-  font-family: Arial, sans-serif;
+  margin-top: 40px;
 }
 
 .summary h2 {
+  color: var(--primary-color);
   text-align: center;
-  color: #333;
-  margin-bottom: 20px;
 }
 
 .summary-container {
   display: flex;
-  justify-content: space-between;
+  flex-wrap: wrap;
   gap: 20px;
+  justify-content: space-between;
 }
 
-.daily-summary, .monthly-summary {
-  color: #333;
-  flex: 1;
-  background-color: white;
-  border-radius: 10px;
+.daily-summary,
+.monthly-summary {
+  background-color: var(--card-background);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
   padding: 20px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  flex: 1;
+  min-width: 300px;
 }
 
-.daily-summary h3, .monthly-summary h3 {
-  margin-bottom: 15px;
-  color: #2c3e50;
+.daily-summary h3,
+.monthly-summary h3 {
+  color: var(--primary-color);
+  margin-top: 0;
 }
 
 .daily-summary ul {
@@ -522,73 +480,58 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   padding: 0;
 }
 
-.daily-summary li {
-
+.daily-summary li,
+.expense-item {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 10px;
-  padding: 5px 0;
-  border-bottom: 1px solid #ecf0f1;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .monthly-cards {
   display: flex;
   flex-wrap: wrap;
-  gap: 20px;
+  gap: 15px;
 }
 
 .month-card {
-  background-color: #fff;
+  background-color: var(--card-background);
   border-radius: 8px;
+  box-shadow: var(--shadow);
   padding: 15px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  width: calc(50% - 10px);
+  width: calc(50% - 15px);
 }
 
 .month-card h4 {
-  margin-bottom: 10px;
-  color: #2c3e50;
-}
-
-.expense-item {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 5px;
-}
-
-.expense-label {
-  color: #7f8c8d;
-}
-
-.expense-value {
-  font-weight: bold;
-  color: #2c3e50;
+  color: var(--primary-color);
+  margin-top: 0;
 }
 
 .total {
+  font-weight: bold;
   margin-top: 10px;
-  padding-top: 5px;
-  border-top: 1px solid #ecf0f1;
+  padding-top: 10px;
+  border-top: 2px solid var(--primary-color);
 }
 
-.total .expense-label,
-.total .expense-value {
-  font-weight: bold;
-  color: #e74c3c;
+@media (max-width: 768px) {
+  .expense-card,
+  .month-card {
+    width: 100%;
+  }
 }
 
 .loading, .error {
   text-align: center;
   padding: 20px;
   font-size: 18px;
-  color: #333;
 }
 
 .error {
-  color: #e74c3c;
+  color: #dc3545;
 }
 // File: client/src/styles/index.css
-:root {
+/* :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
@@ -602,7 +545,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale; */
 }
-
+ */
 
 // File: client/tailwind.config.js
 /** @type {import('tailwindcss').Config} */
@@ -662,8 +605,6 @@ app.get("/daily-summary", async (req, res) => {
         },
         { $sort: { _id: -1 } },
       ]);
-  
-      console.log('Daily summary data:', dailySummary);
   
       if (dailySummary.length === 0) {
         console.log('No daily summary data found');

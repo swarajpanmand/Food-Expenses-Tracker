@@ -8,7 +8,9 @@ pnpm-debug.log*
 lerna-debug.log*
 
 code_context.txt
-get_code_context.sh
+get_code_context.txt
+
+
 
 node_modules
 dist

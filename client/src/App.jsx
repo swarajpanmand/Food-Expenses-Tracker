@@ -16,6 +16,7 @@ const App = () => {
   return (
     <React.Fragment>
       <div className="app-container">
+      <h1>Food Expenses Tracker</h1>
         <div className='app-main'>
           <Mess onExpenseAdded={triggerRefresh}/>
           <Tiffin onExpenseAdded={triggerRefresh}/>
