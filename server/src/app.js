@@ -23,38 +23,42 @@ app.post("/", async (req, res) => {
   }
 });
 
+
 app.get("/daily-summary", async (req, res) => {
-    try {
-      const oneMonthAgo = new Date();
-      oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-  
-      console.log('Fetching daily summary from:', oneMonthAgo);
-  
-      const dailySummary = await User.aggregate([
-        {
-          $match: {
-            date: { $gte: oneMonthAgo },
-          },
+  try {
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+    console.log('Fetching daily summary from:', oneMonthAgo);
+
+    const dailySummary = await User.aggregate([
+      {
+        $match: {
+          date: { $gte: oneMonthAgo },
         },
-        {
-          $group: {
-            _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
-            totalCost: { $sum: "$cost" },
-          },
+      },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
+          mess: { $sum: { $cond: [{ $eq: ["$item", "mess"] }, "$cost", 0] } },
+          tiffin: { $sum: { $cond: [{ $eq: ["$item", "tiffin"] }, "$cost", 0] } },
+          junk: { $sum: { $cond: [{ $eq: ["$item", "junk"] }, "$cost", 0] } },
+          totalCost: { $sum: "$cost" },
         },
-        { $sort: { _id: -1 } },
-      ]);
-  
-      if (dailySummary.length === 0) {
-        console.log('No daily summary data found');
-      }
-  
-      res.json(dailySummary);
-    } catch (err) {
-      console.error('Error in /daily-summary:', err);
-      res.status(500).json({ error: "Failed to fetch daily summary", details: err.message });
+      },
+      { $sort: { _id: -1 } },
+    ]);
+
+    if (dailySummary.length === 0) {
+      console.log('No daily summary data found');
     }
-  });
+
+    res.json(dailySummary);
+  } catch (err) {
+    console.error('Error in /daily-summary:', err);
+    res.status(500).json({ error: "Failed to fetch daily summary", details: err.message });
+  }
+});
 
 app.get("/monthly-summary", async (req, res) => {
   try {

@@ -1,13 +1,11 @@
+// File: client/src/App.jsx
 import React from 'react'
-import Mess from './components/Mess'
-import Tiffin from './components/Tiffin'
-import Junk from './components/Junk'
 import './styles/App.css'
 import Summary from './components/Summary'
-import{useState} from 'react'
+import { useState } from 'react'
+import Type from './components/Type'
 
 const App = () => {
-
   const [refreshKey, setRefreshKey] = useState(0);
   const triggerRefresh = () => {
     setRefreshKey(oldKey => oldKey + 1);
@@ -16,13 +14,12 @@ const App = () => {
   return (
     <React.Fragment>
       <div className="app-container">
-      <h1>Food Expenses Tracker</h1>
+        <h1>Food Expenses Tracker</h1>
         <div className='app-main'>
-          <Mess onExpenseAdded={triggerRefresh}/>
-          <Tiffin onExpenseAdded={triggerRefresh}/>
-          <Junk onExpenseAdded={triggerRefresh}/>
+          <Type onExpenseAdded={triggerRefresh}/>
+          <Summary refreshKey={refreshKey} displayMode="daily"/>
         </div>
-        <Summary refreshKey={refreshKey}/>
+        <Summary refreshKey={refreshKey} displayMode="monthly"/>
       </div>
     </React.Fragment>
   )
