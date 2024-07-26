@@ -11,6 +11,7 @@ The Food Expense Tracker is a web application designed to help users monitor and
 - **Add Expenses:** Users can add food expenses by specifying the date, category (Mess, Tiffin, Junk), cost, and an optional brief description.
 - **Expense Summary:** View daily and monthly summaries of expenses, including breakdowns by category and total costs.
 - **Data Persistence:** Expenses are stored in a MongoDB database.
+- **Expense Graph:** Visual representation of monthly expenses.
 
 ## Technologies Used
 
@@ -79,27 +80,26 @@ The Food Expense Tracker is a web application designed to help users monitor and
 ```
 food-expense-tracker/
 ├── client/
-│   ├── index.html
+│   ├── public/
+│   │   ├── index.html
 │   ├── src/
-│   │   ├── App.jsx
 │   │   ├── components/
-│   │   │   ├── Junk.jsx
-│   │   │   ├── Mess.jsx
+│   │   │   ├── Type.jsx
 │   │   │   ├── Summary.jsx
-│   │   │   └── Tiffin.jsx
+│   │   │   ├── MonthlyExpenseGraph.jsx
+│   │   ├── styles/
+│   │   │   ├── App.css
+│   │   ├── App.jsx
 │   │   ├── main.jsx
-│   │   └── styles/
-│   │       ├── App.css
-│   │       └── index.css
-│   ├── tailwind.config.js
-│   └── package.json
 ├── server/
 │   ├── src/
 │   │   ├── app.js
 │   │   ├── dbConnection.js
-│   │   └── schema.js
-│   └── package.json
-└── README.md
+│   │   ├── schema.js
+├── .gitignore
+├── README.md
+├── package.json
+└── package-lock.json
 ```
 
 ## API Endpoints
